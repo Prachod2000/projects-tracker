@@ -1,149 +1,414 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Projects Tracker</title>
-  <style>
-    body { font-family: Segoe UI, Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
-    header { background: #0b3d4f; color: #fff; padding: 16px 24px; font-size: 20px; }
-    main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-    .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 24px; }
-    h2 { margin-top: 0; font-size: 16px; }
-    form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    label { font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
-    input, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font: inherit; }
-    textarea { grid-column: 1 / -1; resize: vertical; }
-    .actions { grid-column: 1 / -1; display: flex; gap: 8px; }
-    button { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font: inherit; }
-    .primary { background: #0b3d4f; color: #fff; }
-    .secondary { background: #e0e4e8; }
-    .danger { background: #c0392b; color: #fff; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e5e8eb; font-size: 14px; }
-    th { background: #f0f2f4; }
-    .badge { padding: 3px 8px; border-radius: 10px; font-size: 12px; background: #e0e4e8; }
-    .badge.In\ Progress { background: #fff3cd; }
-    .badge.Completed { background: #d4edda; }
-    .badge.On\ Hold { background: #f8d7da; }
-    td button { margin-right: 6px; padding: 5px 10px; font-size: 13px; }
-    #msg { color: #c0392b; font-size: 13px; min-height: 18px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HR Analytics · Projects Tracker</title>
+<style>
+:root{
+  --petrol:#003C51; --teal:#006E74; --teal-light:#0097AC; --green:#01B27C; --orange:#FC6A59;
+  --purple:#881E87; --gray:#7A7480; --sand:#DBD3BD; --wash:#F2F7F8; --wash-mid:#D7E0E3;
+  --white:#fff; --ink:#231F20; --ink-soft:#5C5A5B; --radius:14px;
+  --shadow-1:0 1px 2px rgba(0,60,81,.06),0 4px 14px rgba(0,60,81,.05);
+  --shadow-2:0 2px 6px rgba(0,60,81,.09),0 18px 40px rgba(0,60,81,.11);
+  --font:"Aptos","Segoe UI Variable Text","Segoe UI",-apple-system,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font-family:var(--font);color:var(--ink);line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(900px 420px at 88% -8%,rgba(0,151,172,.10),transparent 62%),
+             linear-gradient(180deg,var(--wash) 0%,#FAFCFC 46%,var(--wash) 100%)}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:none}
+input,select,textarea{font:inherit;color:inherit}
+a{color:var(--teal)}
+:focus-visible{outline:2.5px solid var(--teal-light);outline-offset:2px;border-radius:6px}
+.shell{max-width:1320px;margin:0 auto;padding:0 22px 70px}
+
+/* masthead */
+.masthead{background:linear-gradient(118deg,var(--petrol) 0%,#004C60 52%,var(--teal) 100%);color:#fff;padding:24px 0 26px;margin-bottom:22px}
+.masthead-in{max-width:1320px;margin:0 auto;padding:0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.19em;text-transform:uppercase;color:#7FD3DD;margin-bottom:6px}
+.masthead h1{font-size:clamp(26px,4vw,36px);font-weight:300;letter-spacing:-.02em;line-height:1.06}
+.masthead h1 b{font-weight:600}
+.masthead .sub{margin-top:8px;font-size:13.5px;color:#B9DDE3;max-width:56ch}
+.btn{padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:600;transition:background .16s,box-shadow .16s,transform .16s;white-space:nowrap}
+.btn-add{background:var(--green);color:#fff;box-shadow:0 2px 10px rgba(1,178,124,.35)}
+.btn-add:hover{background:#019c6d;transform:translateY(-1px)}
+.btn-save{background:var(--teal);color:#fff}
+.btn-save:hover{background:#00575C}
+.btn-ghost{border:1px solid var(--wash-mid);background:#fff}
+.btn-ghost:hover{background:var(--wash)}
+.btn-danger{color:#C2402F}
+.btn-danger:hover{background:#FFEDEA}
+.btn[disabled]{opacity:.6;cursor:progress}
+
+/* status cards */
+.status-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:14px}
+.stat{position:relative;text-align:left;background:#fff;border:1px solid var(--wash-mid);border-radius:var(--radius);
+  padding:14px 15px 15px;box-shadow:var(--shadow-1);overflow:hidden;transition:transform .16s,box-shadow .16s}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c);opacity:.35}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-2)}
+.stat[aria-pressed="true"]{border-color:var(--c);box-shadow:0 0 0 1px var(--c),var(--shadow-1)}
+.stat[aria-pressed="true"]::before{opacity:1;width:4px}
+.stat .n{font-size:30px;font-weight:300;letter-spacing:-.03em;color:var(--c);line-height:1}
+.stat .l{margin-top:6px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+
+/* toolbar */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--wash-mid);
+  border-radius:var(--radius);padding:11px 13px;box-shadow:var(--shadow-1);margin-bottom:18px}
+.search{width:260px;max-width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--wash-mid);background:var(--wash)}
+.search:focus,.sel:focus{background:#fff;border-color:var(--teal-light);outline:none}
+.sel{padding:9px 12px;border-radius:9px;border:1px solid var(--wash-mid);background:var(--wash);cursor:pointer}
+.spacer{flex:1}
+.count{font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
+.count b{color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--wash-mid);border-radius:9px;overflow:hidden}
+.seg button{padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+.seg button[aria-pressed="true"]{background:var(--petrol);color:#fff}
+.link-btn{font-size:12.5px;font-weight:600;color:var(--teal);padding:7px 10px;border-radius:8px}
+.link-btn:hover{background:var(--wash)}
+
+/* tiles */
+.grid{display:grid;gap:15px;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));align-items:start}
+.tile{position:relative;background:#fff;border:1px solid var(--wash-mid);border-radius:var(--radius);box-shadow:var(--shadow-1);
+  padding:16px 17px 15px;cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
+.tile::after{content:"";position:absolute;inset:0 auto 0 0;width:4px;border-radius:var(--radius) 0 0 var(--radius);background:var(--accent)}
+.tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-2)}
+.tile.open{box-shadow:var(--shadow-2);border-color:var(--teal-light);cursor:default}
+.tile-top{display:flex;align-items:flex-start;gap:11px;justify-content:space-between}
+.sl{font-family:Consolas,monospace;font-size:10.5px;font-weight:600;color:var(--gray)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.tile h3{font-size:16.5px;font-weight:600;letter-spacing:-.015em;line-height:1.26;margin-top:6px}
+.rank{flex:none;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:6px;
+  background:#F3E8F3;color:#7A1A79;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:13px}
+.pairs.one{grid-template-columns:1fr}
+.pair dt{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gray)}
+.pair dd{font-size:13px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile.open .pair dd{white-space:pre-wrap}
+.tile-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;padding-top:12px;border-top:1px solid var(--wash)}
+.who{display:flex;align-items:center;gap:8px;min-width:0}
+.avatar{flex:none;width:27px;height:27px;border-radius:50%;display:grid;place-items:center;font-size:10.5px;font-weight:700;color:#fff}
+.who .nm{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.open-link{font-size:11.5px;font-weight:600;color:var(--teal);text-decoration:none;padding:5px 9px;border-radius:7px;border:1px solid var(--wash-mid);white-space:nowrap}
+.open-link:hover{background:var(--wash);border-color:var(--teal-light)}
+.detail{margin-top:13px;padding-top:12px;border-top:1px dashed var(--wash-mid);display:grid;gap:11px}
+.tile-actions{display:flex;gap:8px;margin-top:4px}
+.tile-actions .btn{padding:7px 13px;font-size:12.5px}
+.empty{grid-column:1/-1;text-align:center;padding:56px 22px;background:#fff;border:1px solid var(--wash-mid);border-radius:var(--radius)}
+.empty h4{font-size:17px;font-weight:600;margin-bottom:6px}
+.empty p{font-size:13.5px;color:var(--ink-soft);margin-bottom:15px}
+
+/* table */
+.tablewrap{background:#fff;border:1px solid var(--wash-mid);border-radius:var(--radius);box-shadow:var(--shadow-1);overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--wash);font-size:13px;vertical-align:top}
+th{background:var(--wash);font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);position:sticky;top:0}
+tr:hover td{background:#FAFCFC}
+td .chip{font-size:10px}
+td .btn{padding:5px 10px;font-size:12px;margin-right:4px}
+td.wrap{white-space:pre-wrap;max-width:280px}
+
+/* dialog form */
+dialog{border:none;border-radius:var(--radius);padding:0;width:min(760px,94vw);max-height:92vh;overflow:auto;margin:auto;box-shadow:var(--shadow-2);color:var(--ink)}
+dialog::backdrop{background:rgba(0,60,81,.45);backdrop-filter:blur(2px)}
+.dlg-head{background:linear-gradient(118deg,var(--petrol),var(--teal));color:#fff;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
+.dlg-head h2{font-size:17px;font-weight:600}
+.dlg-head button{color:#fff;font-size:22px;line-height:1;padding:2px 8px;border-radius:6px}
+.dlg-head button:hover{background:rgba(255,255,255,.15)}
+.form{padding:20px 22px 22px;display:grid;gap:13px}
+.form .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .row.three{grid-template-columns:1fr 1fr 1fr}
+.form label{display:block;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:5px}
+.form input,.form select,.form textarea{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--wash-mid);background:var(--wash)}
+.form input:focus,.form select:focus,.form textarea:focus{outline:none;border-color:var(--teal-light);background:#fff}
+.form textarea{resize:vertical;min-height:62px}
+.form-actions{display:flex;gap:9px;align-items:center;margin-top:4px}
+.err{font-size:12.5px;color:#C2402F;font-weight:500;min-height:18px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--petrol);color:#fff;
+  padding:10px 18px;border-radius:999px;font-size:13px;box-shadow:var(--shadow-2);opacity:0;transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+@media (max-width:640px){
+  .masthead-in{align-items:flex-start}
+  .search{width:100%}
+  .form .row,.form .row.three,.pairs{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
-  <header>Projects Tracker</header>
-  <main>
-    <div class="card">
-      <h2 id="formTitle">Add project</h2>
-      <form id="projectForm">
-        <input type="hidden" id="Id">
-        <label>Name *<input id="Name" required></label>
-        <label>Owner<input id="Owner"></label>
-        <label>Status
-          <select id="Status">
-            <option>Not Started</option>
-            <option>In Progress</option>
-            <option>On Hold</option>
-            <option>Completed</option>
-          </select>
-        </label>
-        <label>Start date<input type="date" id="StartDate"></label>
-        <label>Due date<input type="date" id="DueDate"></label>
-        <label></label>
-        <textarea id="Notes" rows="2" placeholder="Notes"></textarea>
-        <div class="actions">
-          <button type="submit" class="primary" id="saveBtn">Add</button>
-          <button type="button" class="secondary" id="cancelBtn" style="display:none">Cancel</button>
-        </div>
-      </form>
-      <div id="msg"></div>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <div>
+      <div class="eyebrow">HR Analytics</div>
+      <h1>Projects <b>Tracker</b></h1>
+      <p class="sub">A clear view of project ownership, update cadence, key contacts, utilization, and delivery status.</p>
     </div>
+    <button class="btn btn-add" id="addBtn">+ Add project</button>
+  </div>
+</header>
 
-    <div class="card">
-      <h2>All projects (<span id="count">0</span>)</h2>
-      <table>
-        <thead>
-          <tr><th>Name</th><th>Owner</th><th>Status</th><th>Start</th><th>Due</th><th>Notes</th><th></th></tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
+<main class="shell">
+  <div class="status-row" id="statusRow" role="group" aria-label="Filter by status"></div>
+
+  <div class="toolbar">
+    <input class="search" id="search" type="search" placeholder="Search projects, consumers, contacts…" aria-label="Search">
+    <select class="sel" id="memberFilter" aria-label="Filter by team member"></select>
+    <div class="spacer"></div>
+    <span class="count" id="count"></span>
+    <button class="link-btn" id="clearBtn" hidden>Clear filters</button>
+    <div class="seg" role="group" aria-label="View">
+      <button id="viewTiles" aria-pressed="true">Tiles</button>
+      <button id="viewTable" aria-pressed="false">Table</button>
     </div>
-  </main>
+  </div>
 
-  <script>
-    const API = "/api/projects";
-    const fields = ["Name", "Owner", "Status", "StartDate", "DueDate", "Notes"];
-    const $ = id => document.getElementById(id);
+  <div class="grid" id="grid"></div>
+  <div class="tablewrap" id="tablewrap" hidden></div>
+</main>
 
-    // ---------- Load and display ----------
-    async function loadProjects() {
-      const res = await fetch(API);
-      const projects = await res.json();
-      $("count").textContent = projects.length;
-      $("rows").innerHTML = projects.map(p => `
-        <tr>
-          <td>${esc(p.Name)}</td>
-          <td>${esc(p.Owner)}</td>
-          <td><span class="badge ${esc(p.Status)}">${esc(p.Status)}</span></td>
-          <td>${esc(p.StartDate)}</td>
-          <td>${esc(p.DueDate)}</td>
-          <td>${esc(p.Notes)}</td>
-          <td>
-            <button class="secondary" onclick='startEdit(${JSON.stringify(p)})'>Edit</button>
-            <button class="danger" onclick="removeProject(${p.Id})">Delete</button>
-          </td>
-        </tr>`).join("");
-    }
+<dialog id="dlg">
+  <form method="dialog" id="form" novalidate>
+    <div class="dlg-head">
+      <h2 id="dlgTitle">Add project</h2>
+      <button type="button" id="dlgClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="form">
+      <input type="hidden" id="f-Id">
+      <div class="row three">
+        <div><label for="f-SlNo">Sl No.</label><input id="f-SlNo" type="number" min="0"></div>
+        <div><label for="f-Owner">Team member *</label><input id="f-Owner" list="memberList" placeholder="Name"><datalist id="memberList"></datalist></div>
+        <div><label for="f-Status">Status</label><select id="f-Status"></select></div>
+      </div>
+      <div><label for="f-Name">Project *</label><input id="f-Name" placeholder="Report or dashboard name"></div>
+      <div class="row">
+        <div><label for="f-Consumer">Consumer</label><input id="f-Consumer" list="consumerList" placeholder="Who receives it"><datalist id="consumerList"></datalist></div>
+        <div><label for="f-POC">Point of contact</label><input id="f-POC" placeholder="Contact person / team"></div>
+      </div>
+      <div><label for="f-DataSource">Data source</label><textarea id="f-DataSource" rows="2" placeholder="Systems, reports or files used"></textarea></div>
+      <div class="row">
+        <div><label for="f-UpdateFreq">Update frequency</label><input id="f-UpdateFreq" list="freqList" placeholder="e.g. Monthly by 10th"><datalist id="freqList"></datalist></div>
+        <div><label for="f-TimeUpdate">Time for update</label><input id="f-TimeUpdate" placeholder="e.g. 1 day, 2 hrs"></div>
+      </div>
+      <div><label for="f-Link">Link to data / dashboard</label><input id="f-Link" placeholder="https://…"></div>
+      <div class="row three">
+        <div><label for="f-Utilization">Utilization / rank</label><input id="f-Utilization" placeholder="e.g. Top 10 (Rank 7)"></div>
+        <div><label for="f-StartDate">Start date</label><input id="f-StartDate" type="date"></div>
+        <div><label for="f-DueDate">End date</label><input id="f-DueDate" type="date"></div>
+      </div>
+      <div><label for="f-Notes">Notes</label><textarea id="f-Notes" rows="2" placeholder="Anything the next person needs to know"></textarea></div>
+      <div class="err" id="formErr"></div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-save" id="saveBtn">Save</button>
+        <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+<div class="toast" id="toast"></div>
 
-    function esc(v) {
-      return (v ?? "").toString().replace(/[&<>"']/g, c =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    }
+<script>
+/* ---------- config ---------- */
+const API = "/api/projects";
+const FIELDS = ["SlNo","Name","Owner","Status","Consumer","POC","DataSource","UpdateFreq","TimeUpdate","Link","Utilization","StartDate","DueDate","Notes"];
+const STATUS_OPTIONS = ["Not Started","In Pipeline","In Progress","On Hold","Completed & Ongoing","Completed & Delivered"];
+const STATUS_COLORS = {
+  "not started":"var(--gray)", "in pipeline":"var(--purple)", "in progress":"var(--teal-light)",
+  "on hold":"var(--orange)", "completed & ongoing":"var(--teal)", "completed & delivered":"var(--green)"
+};
+const FREQ_OPTIONS = ["Daily","Weekly","Bi-weekly","Monthly","Monthly by 10th of every month","Monthly after data shared","Quarterly","Semiannually","Yearly","Ad-hoc"];
+const AVATAR_COLORS = ["#006E74","#881E87","#003C51","#01B27C","#0097AC","#7A7480"];
 
-    // ---------- Add / Update ----------
-    $("projectForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const body = {};
-      fields.forEach(f => body[f] = $(f).value || null);
-      const id = $("Id").value;
+/* ---------- state ---------- */
+let projects = [], statusF = "all", memberF = "all", query = "", view = "tiles", openId = null;
 
-      const res = await fetch(id ? `${API}/${id}` : API, {
-        method: id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const statusColor = s => STATUS_COLORS[(s||"").trim().toLowerCase()] || "var(--purple)";
+const initials = n => (n||"").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase() || "?";
+const avatarColor = n => { let h=0; for(const c of (n||"")) h=(h*31+c.charCodeAt(0))%997; return AVATAR_COLORS[h%AVATAR_COLORS.length]; };
+const safeUrl = u => /^https?:\/\//i.test((u||"").trim()) ? u.trim() : "";
+const fmtDate = s => { if(!s) return "—"; const d=new Date(String(s).slice(0,10)+"T00:00:00"); return isNaN(d)?"—":d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); };
+const distinct = key => [...new Set(projects.map(p => (p[key]||"").trim()).filter(Boolean))].sort();
+const dash = v => esc(v) || "—";
 
-      if (!res.ok) { $("msg").textContent = (await res.json()).error || "Something went wrong"; return; }
-      resetForm();
-      loadProjects();
-    });
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
 
-    function startEdit(p) {
-      fields.forEach(f => $(f).value = p[f] ?? "");
-      $("Id").value = p.Id;
-      $("formTitle").textContent = `Edit project #${p.Id}`;
-      $("saveBtn").textContent = "Save changes";
-      $("cancelBtn").style.display = "inline-block";
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+/* ---------- data ---------- */
+async function load(){
+  try{
+    const r = await fetch(API);
+    if(!r.ok) throw new Error(await r.text());
+    projects = await r.json();
+  }catch(e){ projects=[]; console.error(e); toast("Could not load projects"); }
+  render();
+}
+async function saveProject(data){
+  const id = data.Id;
+  const r = await fetch(id ? `${API}/${id}` : API, {method: id ? "PUT" : "POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(data)});
+  if(!r.ok){ const j = await r.json().catch(()=>({})); throw new Error(j.error || "Save failed"); }
+  return r.json();
+}
+async function deleteProject(id){
+  const r = await fetch(`${API}/${id}`, {method:"DELETE"});
+  if(!r.ok) throw new Error("Delete failed");
+}
 
-    function resetForm() {
-      $("projectForm").reset();
-      $("Id").value = "";
-      $("formTitle").textContent = "Add project";
-      $("saveBtn").textContent = "Add";
-      $("cancelBtn").style.display = "none";
-      $("msg").textContent = "";
-    }
-    $("cancelBtn").addEventListener("click", resetForm);
+/* ---------- filtering ---------- */
+function visible(){
+  const q = query.trim().toLowerCase();
+  return projects.filter(p => {
+    const okS = statusF==="all" || (p.Status||"").trim()===statusF;
+    const okM = memberF==="all" || (p.Owner||"").trim()===memberF;
+    const okQ = !q || FIELDS.map(f=>p[f]).join(" ").toLowerCase().includes(q);
+    return okS && okM && okQ;
+  }).sort((a,b) => (a.SlNo ?? 9e9) - (b.SlNo ?? 9e9) || a.Id - b.Id);
+}
 
-    // ---------- Delete ----------
-    async function removeProject(id) {
-      if (!confirm("Delete this project?")) return;
-      await fetch(`${API}/${id}`, { method: "DELETE" });
-      loadProjects();
-    }
+/* ---------- render ---------- */
+function renderStatusCards(){
+  const found = distinct("Status");
+  const ordered = [...STATUS_OPTIONS.filter(s=>found.includes(s)), ...found.filter(s=>!STATUS_OPTIONS.includes(s))];
+  const cards = [{key:"all",label:"Total projects",color:"var(--petrol)"}, ...ordered.map(s=>({key:s,label:s,color:statusColor(s)}))];
+  $("statusRow").innerHTML = cards.map(c => {
+    const n = c.key==="all" ? projects.length : projects.filter(p=>(p.Status||"").trim()===c.key).length;
+    return `<button class="stat" style="--c:${c.color}" data-status="${esc(c.key)}" aria-pressed="${statusF===c.key}">
+      <div class="n">${n}</div><div class="l">${esc(c.label)}</div></button>`;
+  }).join("");
+}
+function renderFilters(){
+  const members = distinct("Owner");
+  if(memberF!=="all" && !members.includes(memberF)) memberF="all";
+  $("memberFilter").innerHTML = '<option value="all">All team members</option>' + members.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join("");
+  $("memberFilter").value = memberF;
+  $("memberList").innerHTML = members.map(m=>`<option value="${esc(m)}">`).join("");
+  $("consumerList").innerHTML = distinct("Consumer").map(m=>`<option value="${esc(m)}">`).join("");
+  $("freqList").innerHTML = [...new Set([...FREQ_OPTIONS, ...distinct("UpdateFreq")])].map(m=>`<option value="${esc(m)}">`).join("");
+}
+function tile(p){
+  const open = openId===p.Id, url = safeUrl(p.Link), accent = statusColor(p.Status);
+  const detail = open ? `
+    <div class="detail">
+      <div class="pairs">
+        <div class="pair"><dt>Data source</dt><dd>${dash(p.DataSource)}</dd></div>
+        <div class="pair"><dt>Point of contact</dt><dd>${dash(p.POC)}</dd></div>
+        <div class="pair"><dt>Time for update</dt><dd>${dash(p.TimeUpdate)}</dd></div>
+        <div class="pair"><dt>Utilization / rank</dt><dd>${dash(p.Utilization)}</dd></div>
+        <div class="pair"><dt>Start date</dt><dd>${fmtDate(p.StartDate)}</dd></div>
+        <div class="pair"><dt>End date</dt><dd>${fmtDate(p.DueDate)}</dd></div>
+      </div>
+      <div class="pair"><dt>Notes</dt><dd>${dash(p.Notes)}</dd></div>
+      <div class="tile-actions">
+        <button class="btn btn-ghost" data-edit="${p.Id}">Edit</button>
+        <button class="btn btn-ghost btn-danger" data-del="${p.Id}">Delete</button>
+      </div>
+    </div>` : "";
+  return `
+  <div class="tile ${open?"open":""}" style="--accent:${accent}" data-open="${p.Id}" role="button" tabindex="0" aria-expanded="${open}">
+    <div class="tile-top">
+      <div style="min-width:0">
+        <span class="sl">#${esc(p.SlNo ?? "—")}</span>
+        <span class="chip" style="margin-left:9px"><span class="dot"></span>${esc(p.Status)||"No status"}</span>
+        <h3>${esc(p.Name)}</h3>
+      </div>
+      ${p.Utilization ? `<span class="rank" title="${esc(p.Utilization)}">${esc(p.Utilization)}</span>` : ""}
+    </div>
+    <div class="pairs one"><div class="pair"><dt>Consumer</dt><dd title="${esc(p.Consumer)}">${dash(p.Consumer)}</dd></div></div>
+    <div class="pairs one"><div class="pair"><dt>Update frequency</dt><dd>${dash(p.UpdateFreq)}</dd></div></div>
+    <div class="tile-foot">
+      <div class="who"><span class="avatar" style="background:${avatarColor(p.Owner)}">${esc(initials(p.Owner))}</span><span class="nm">${esc(p.Owner)||"Unassigned"}</span></div>
+      ${url ? `<a class="open-link" href="${esc(url)}" target="_blank" rel="noopener">Open ↗</a>` : `<span class="sl">${open?"Click to collapse":"Click for details"}</span>`}
+    </div>
+    ${detail}
+  </div>`;
+}
+function renderTable(rows){
+  $("tablewrap").innerHTML = `<table>
+    <thead><tr><th>#</th><th>Project</th><th>Team member</th><th>Status</th><th>Consumer</th><th>POC</th><th>Update frequency</th><th>Link</th><th></th></tr></thead>
+    <tbody>${rows.map(p => `<tr>
+      <td>${esc(p.SlNo ?? "")}</td>
+      <td><b>${esc(p.Name)}</b></td>
+      <td>${dash(p.Owner)}</td>
+      <td><span class="chip" style="--accent:${statusColor(p.Status)}"><span class="dot"></span>${dash(p.Status)}</span></td>
+      <td class="wrap">${dash(p.Consumer)}</td>
+      <td class="wrap">${dash(p.POC)}</td>
+      <td class="wrap">${dash(p.UpdateFreq)}</td>
+      <td>${safeUrl(p.Link) ? `<a href="${esc(safeUrl(p.Link))}" target="_blank" rel="noopener">Open ↗</a>` : "—"}</td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost" data-edit="${p.Id}">Edit</button><button class="btn btn-ghost btn-danger" data-del="${p.Id}">Delete</button></td>
+    </tr>`).join("")}</tbody></table>`;
+}
+function render(){
+  renderStatusCards(); renderFilters();
+  const rows = visible();
+  $("count").innerHTML = `<b>${rows.length}</b> of ${projects.length} shown`;
+  $("clearBtn").hidden = !(statusF!=="all" || memberF!=="all" || query.trim());
+  $("grid").hidden = view!=="tiles"; $("tablewrap").hidden = view!=="table";
+  $("viewTiles").setAttribute("aria-pressed", view==="tiles"); $("viewTable").setAttribute("aria-pressed", view==="table");
+  if(rows.length===0){
+    const msg = projects.length===0 ? ["No projects yet","Click “Add project” to create the first one."] : ["No projects match these filters","Try another status or team member."];
+    $("grid").innerHTML = `<div class="empty"><h4>${msg[0]}</h4><p>${msg[1]}</p></div>`;
+    $("tablewrap").innerHTML = `<div class="empty" style="border:none"><h4>${msg[0]}</h4><p>${msg[1]}</p></div>`;
+    return;
+  }
+  if(view==="tiles") $("grid").innerHTML = rows.map(tile).join(""); else renderTable(rows);
+}
 
-    loadProjects();
-  </script>
+/* ---------- dialog ---------- */
+function openDialog(p){
+  $("dlgTitle").textContent = p ? `Edit project #${p.SlNo ?? p.Id}` : "Add project";
+  $("formErr").textContent = "";
+  $("f-Status").innerHTML = [...new Set([...STATUS_OPTIONS, p?.Status].filter(Boolean))].map(s=>`<option>${esc(s)}</option>`).join("");
+  $("f-Id").value = p?.Id ?? "";
+  FIELDS.forEach(f => { const el=$("f-"+f); if(el) el.value = p?.[f] ?? ""; });
+  if(!p){ $("f-SlNo").value = Math.max(0, ...projects.map(x=>Number(x.SlNo)||0)) + 1; $("f-Status").value="Not Started"; }
+  $("dlg").showModal(); $("f-Name").focus();
+}
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const data = {Id: $("f-Id").value || null};
+  FIELDS.forEach(f => data[f] = $("f-"+f).value.trim() || null);
+  if(!data.Name){ $("formErr").textContent="Give the project a name."; return; }
+  if(!data.Owner){ $("formErr").textContent="Every project needs a team member."; return; }
+  if(data.StartDate && data.DueDate && data.DueDate < data.StartDate){ $("formErr").textContent="End date is before the start date."; return; }
+  $("saveBtn").disabled = true; $("saveBtn").textContent = "Saving…";
+  try{ const saved = await saveProject(data); $("dlg").close(); openId = saved.Id; toast(data.Id ? "Project updated" : "Project added"); await load(); }
+  catch(err){ $("formErr").textContent = err.message; }
+  finally{ $("saveBtn").disabled=false; $("saveBtn").textContent="Save"; }
+});
+$("dlgClose").onclick = $("cancelBtn").onclick = () => $("dlg").close();
+
+/* ---------- events ---------- */
+$("addBtn").onclick = () => openDialog(null);
+$("statusRow").onclick = e => { const b=e.target.closest("[data-status]"); if(!b) return; statusF = statusF===b.dataset.status ? "all" : b.dataset.status; render(); };
+$("search").oninput = e => { query=e.target.value; render(); };
+$("memberFilter").onchange = e => { memberF=e.target.value; render(); };
+$("clearBtn").onclick = () => { statusF="all"; memberF="all"; query=""; $("search").value=""; render(); };
+$("viewTiles").onclick = () => { view="tiles"; render(); };
+$("viewTable").onclick = () => { view="table"; render(); };
+
+async function handleAction(e){
+  if(e.target.closest("a")) return true;
+  const ed = e.target.closest("[data-edit]"), del = e.target.closest("[data-del]");
+  if(ed){ openDialog(projects.find(p=>p.Id==ed.dataset.edit)); return true; }
+  if(del){
+    const p = projects.find(x=>x.Id==del.dataset.del);
+    if(confirm(`Delete "${p.Name}"?`)){ try{ await deleteProject(p.Id); toast("Project deleted"); await load(); }catch(err){ toast(err.message); } }
+    return true;
+  }
+  return false;
+}
+$("grid").addEventListener("click", async e => {
+  if(await handleAction(e)) return;
+  const t = e.target.closest("[data-open]"); if(!t) return;
+  const id = Number(t.dataset.open); openId = openId===id ? null : id; render();
+});
+$("grid").addEventListener("keydown", e => { const t=e.target.closest("[data-open]"); if(t && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); t.click(); } });
+$("tablewrap").addEventListener("click", handleAction);
+
+load();
+</script>
 </body>
 </html>
