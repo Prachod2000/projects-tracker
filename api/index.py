@@ -13,6 +13,20 @@ COLS = ["Id", "Name", "Owner", "Status", "StartDate", "DueDate", "Notes", "Creat
 KEYMAP = {c.lower(): c for c in COLS}
 
 
+def api_route(rule, **options):
+    """Register a route at both /api<rule> and <rule>, so it works however Vercel passes the path."""
+    def decorator(f):
+        app.add_url_rule("/api" + rule, f.__name__ + "_api", f, **options)
+        app.add_url_rule(rule, f.__name__, f, **options)
+        return f
+    return decorator
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"error": "Not found", "path": request.path}), 404
+
+
 # ---------- Database helpers (SQLite locally, Postgres on Vercel) ----------
 def get_conn():
     if DATABASE_URL:
@@ -65,12 +79,12 @@ def home():
 
 
 # ---------- API ----------
-@app.route("/api/projects", methods=["GET"])
+@api_route("/projects", methods=["GET"])
 def list_projects():
     return jsonify(run("SELECT * FROM Projects ORDER BY Id DESC", fetch="all"))
 
 
-@app.route("/api/projects", methods=["POST"])
+@api_route("/projects", methods=["POST"])
 def add_project():
     data = request.get_json()
     if not data or not data.get("Name"):
@@ -85,7 +99,7 @@ def add_project():
     return jsonify(run("SELECT * FROM Projects WHERE Id = ?", (new_id,), fetch="one")), 201
 
 
-@app.route("/api/projects/<int:project_id>", methods=["PUT"])
+@api_route("/projects/<int:project_id>", methods=["PUT"])
 def update_project(project_id):
     data = request.get_json()
     if not data or not data.get("Name"):
@@ -104,7 +118,7 @@ def update_project(project_id):
     return jsonify(row)
 
 
-@app.route("/api/projects/<int:project_id>", methods=["DELETE"])
+@api_route("/projects/<int:project_id>", methods=["DELETE"])
 def delete_project(project_id):
     run("DELETE FROM Projects WHERE Id = ?", (project_id,))
     return "", 204
