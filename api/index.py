@@ -9,7 +9,10 @@ DATABASE_URL = os.environ.get("DATABASE_URL")   # set on Vercel (Neon); absent l
 
 app = Flask(__name__, static_folder=os.path.join(ROOT, "public"), static_url_path="")
 
-COLS = ["Id", "Name", "Owner", "Status", "StartDate", "DueDate", "Notes", "CreatedAt", "UpdatedAt"]
+# Every column the user can edit. The DB table also has Id, CreatedAt, UpdatedAt.
+FIELDS = ["SlNo", "Name", "Owner", "Status", "Consumer", "POC", "DataSource",
+          "UpdateFreq", "TimeUpdate", "Link", "Utilization", "StartDate", "DueDate", "Notes"]
+COLS = ["Id"] + FIELDS + ["CreatedAt", "UpdatedAt"]
 KEYMAP = {c.lower(): c for c in COLS}
 
 
@@ -72,6 +75,24 @@ def run(sql, params=(), fetch=None, returning_id=False):
         conn.close()
 
 
+def clean(data):
+    """Pick only known fields from the request body; blank strings become NULL."""
+    out = {}
+    for f in FIELDS:
+        v = data.get(f)
+        if isinstance(v, str):
+            v = v.strip() or None
+        out[f] = v
+    if out["SlNo"] not in (None, ""):
+        try:
+            out["SlNo"] = int(out["SlNo"])
+        except (TypeError, ValueError):
+            out["SlNo"] = None
+    if not out["Status"]:
+        out["Status"] = "Not Started"
+    return out
+
+
 # ---------- Web page (used when running locally) ----------
 @app.route("/")
 def home():
@@ -81,37 +102,32 @@ def home():
 # ---------- API ----------
 @api_route("/projects", methods=["GET"])
 def list_projects():
-    return jsonify(run("SELECT * FROM Projects ORDER BY Id DESC", fetch="all"))
+    rows = run("SELECT * FROM Projects ORDER BY SlNo ASC, Id ASC", fetch="all")
+    return jsonify(rows)
 
 
 @api_route("/projects", methods=["POST"])
 def add_project():
-    data = request.get_json()
-    if not data or not data.get("Name"):
-        return jsonify({"error": "Name is required"}), 400
-    new_id = run(
-        """INSERT INTO Projects (Name, Owner, Status, StartDate, DueDate, Notes)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (data.get("Name"), data.get("Owner"), data.get("Status", "Not Started"),
-         data.get("StartDate"), data.get("DueDate"), data.get("Notes")),
-        returning_id=True,
-    )
+    data = request.get_json(silent=True) or {}
+    if not data.get("Name"):
+        return jsonify({"error": "Project name is required"}), 400
+    d = clean(data)
+    cols = ", ".join(FIELDS)
+    marks = ", ".join("?" for _ in FIELDS)
+    new_id = run(f"INSERT INTO Projects ({cols}) VALUES ({marks})",
+                 tuple(d[f] for f in FIELDS), returning_id=True)
     return jsonify(run("SELECT * FROM Projects WHERE Id = ?", (new_id,), fetch="one")), 201
 
 
 @api_route("/projects/<int:project_id>", methods=["PUT"])
 def update_project(project_id):
-    data = request.get_json()
-    if not data or not data.get("Name"):
-        return jsonify({"error": "Name is required"}), 400
-    run(
-        """UPDATE Projects
-           SET Name = ?, Owner = ?, Status = ?, StartDate = ?, DueDate = ?, Notes = ?,
-               UpdatedAt = CURRENT_TIMESTAMP
-           WHERE Id = ?""",
-        (data.get("Name"), data.get("Owner"), data.get("Status"),
-         data.get("StartDate"), data.get("DueDate"), data.get("Notes"), project_id),
-    )
+    data = request.get_json(silent=True) or {}
+    if not data.get("Name"):
+        return jsonify({"error": "Project name is required"}), 400
+    d = clean(data)
+    sets = ", ".join(f"{f} = ?" for f in FIELDS)
+    run(f"UPDATE Projects SET {sets}, UpdatedAt = CURRENT_TIMESTAMP WHERE Id = ?",
+        tuple(d[f] for f in FIELDS) + (project_id,))
     row = run("SELECT * FROM Projects WHERE Id = ?", (project_id,), fetch="one")
     if row is None:
         return jsonify({"error": "Not found"}), 404
